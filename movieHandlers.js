@@ -4,8 +4,41 @@ const postMovie = (req, res) => {
   res.send("Post route is working 🎉");
 };
 
-const getMovie = (req, res) => {
-  res.send("Get route is working 🎉");
+const getMovies = (req, res) => {
+  const initialSql = "select * from movies";
+  const where = [];
+
+  if (req.query.color != null) {
+    where.push({
+      column: "color",
+      value: req.query.color,
+      operator: "=",
+    });
+  }
+  if (req.query.max_duration != null) {
+    where.push({
+      column: "duration",
+      value: req.query.max_duration,
+      operator: "<=",
+    });
+  }
+
+  database
+    .query(
+      where.reduce(
+        (sql, { column, operator }, index) =>
+          `${sql} ${index === 0 ? "where" : "and"} ${column} ${operator} ?`,
+        initialSql
+      ),
+      where.map(({ value }) => value)
+    )
+    .then(([movies]) => {
+      res.json(movies);
+    })
+    .catch((err) => {
+      console.error(err);
+      res.status(500).send("Error retrieving data from database");
+    });
 };
 
 const updateMovie = (req, res) => {
@@ -59,7 +92,7 @@ const deleteMovie = (req, res) => {
 };
 
 module.exports = {
-  getMovie,
+  getMovies,
   postMovie,
   updateMovie,
   deleteMovie,
